@@ -7,6 +7,7 @@ use App\Models\TicketHistory;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 
 class TicketController extends Controller
 {
@@ -75,16 +76,19 @@ class TicketController extends Controller
 
     public function show(Ticket $ticket)
     {
-        $this->authorizeTicket($ticket);
+        $this->authorize('view', $ticket);
 
         $ticket->load(['user', 'technician', 'comments.user', 'histories.user']);
 
-        return view('tickets.show', compact('ticket'));
+        return view('tickets.show', [
+            'ticket' => $ticket,
+            'technicians' => User::technicians()->get(),
+        ]);
     }
 
     public function edit(Ticket $ticket)
     {
-        $this->authorizeTicket($ticket);
+        $this->authorize('update', $ticket);
 
         $technicians = User::technicians()->get();
 
@@ -93,7 +97,7 @@ class TicketController extends Controller
 
     public function update(Request $request, Ticket $ticket)
     {
-        $this->authorizeTicket($ticket);
+        $this->authorize('update', $ticket);
 
         $user = Auth::user();
         $oldData = $ticket->only(['title', 'description', 'category', 'priority', 'status', 'technician_id']);
@@ -104,12 +108,17 @@ class TicketController extends Controller
             'category' => 'sometimes|required|in:hardware,software,jaringan,lainnya',
             'priority' => 'sometimes|required|in:low,medium,high,urgent',
             'status' => 'sometimes|required|in:open,in_progress,resolved,closed',
-            'technician_id' => 'nullable|exists:users,id',
+            'technician_id' => 'nullable|' . Rule::exists('users', 'id')->where('role', 'technician'),
         ]);
 
-        // Only admin can assign technician and change status
+        // Only admin can reassign technician
         if (!$user->isAdmin()) {
-            unset($validated['technician_id'], $validated['status']);
+            unset($validated['technician_id']);
+        }
+
+        // Status changes are limited to admin and the assigned technician
+        if (isset($validated['status']) && !$this->canChangeStatus($user, $ticket)) {
+            unset($validated['status']);
         }
 
         // Set timestamps based on status
@@ -125,7 +134,11 @@ class TicketController extends Controller
 
         // Log changes
         foreach ($validated as $field => $newValue) {
-            if (isset($oldData[$field]) && $oldData[$field] != $newValue) {
+            if ($field === 'resolved_at' || $field === 'closed_at') {
+                continue;
+            }
+
+            if (array_key_exists($field, $oldData) && $oldData[$field] != $newValue) {
                 TicketHistory::create([
                     'ticket_id' => $ticket->id,
                     'user_id' => $user->id,
@@ -142,7 +155,7 @@ class TicketController extends Controller
 
     public function destroy(Ticket $ticket)
     {
-        $this->authorizeTicket($ticket);
+        $this->authorize('delete', $ticket);
 
         $ticket->delete();
 
@@ -152,12 +165,10 @@ class TicketController extends Controller
 
     public function assign(Request $request, Ticket $ticket)
     {
-        if (!Auth::user()->isAdmin()) {
-            abort(403);
-        }
+        $this->authorize('assign', $ticket);
 
         $validated = $request->validate([
-            'technician_id' => 'required|exists:users,id',
+            'technician_id' => ['required', Rule::exists('users', 'id')->where('role', 'technician')],
         ]);
 
         $oldTechnicianId = $ticket->technician_id;
@@ -177,22 +188,9 @@ class TicketController extends Controller
             ->with('success', 'Teknisi berhasil ditugaskan.');
     }
 
-    private function authorizeTicket(Ticket $ticket)
+    private function canChangeStatus(User $user, Ticket $ticket): bool
     {
-        $user = Auth::user();
-
-        if ($user->isAdmin()) {
-            return true;
-        }
-
-        if ($user->isTechnician() && $ticket->technician_id === $user->id) {
-            return true;
-        }
-
-        if ($user->isUser() && $ticket->user_id === $user->id) {
-            return true;
-        }
-
-        abort(403, 'Anda tidak memiliki akses ke ticket ini.');
+        return $user->isAdmin()
+            || ($user->isTechnician() && $ticket->technician_id === $user->id);
     }
 }

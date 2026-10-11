@@ -30,13 +30,7 @@ class DashboardController extends Controller
             $query->whereIn('status', ['open', 'in_progress']);
         }])->get();
 
-        $monthlyTickets = Ticket::selectRaw('MONTH(created_at) as month, COUNT(*) as count')
-            ->whereYear('created_at', date('Y'))
-            ->groupBy('month')
-            ->pluck('count', 'month')
-            ->toArray();
-
-        return view('dashboard.admin', compact('stats', 'recentTickets', 'technicianStats', 'monthlyTickets'));
+        return view('dashboard.admin', compact('stats', 'recentTickets', 'technicianStats'));
     }
 
     public function technician()
@@ -50,12 +44,17 @@ class DashboardController extends Controller
             'resolved' => $user->assignedTickets()->resolved()->count(),
         ];
 
+        $priorityOrder = ['urgent' => 0, 'high' => 1, 'medium' => 2, 'low' => 3];
+
         $myTickets = $user->assignedTickets()
             ->with('user')
             ->whereIn('status', ['open', 'in_progress'])
-            ->orderByRaw("FIELD(priority, 'urgent', 'high', 'medium', 'low')")
-            ->latest()
-            ->get();
+            ->get()
+            ->sortBy([
+                fn ($a, $b) => $priorityOrder[$a->priority] <=> $priorityOrder[$b->priority],
+                fn ($a, $b) => $b->created_at <=> $a->created_at,
+            ])
+            ->values();
 
         $recentResolved = $user->assignedTickets()
             ->with('user')

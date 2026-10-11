@@ -11,6 +11,8 @@ class CommentController extends Controller
 {
     public function store(Request $request, Ticket $ticket)
     {
+        $this->authorize('view', $ticket);
+
         $validated = $request->validate([
             'comment' => 'required|string',
         ]);

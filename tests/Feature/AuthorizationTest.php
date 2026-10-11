@@ -131,6 +131,79 @@ class AuthorizationTest extends TestCase
         $this->assertEquals('open', $ticket->fresh()->status);
     }
 
+    public function test_assigned_technician_can_change_status(): void
+    {
+        $technician = $this->makeUser('technician');
+        $ticket = Ticket::factory()->assignedTo($technician)->create(['status' => 'open']);
+
+        $this->actingAs($technician)
+            ->put("/tickets/{$ticket->id}", ['status' => 'in_progress'])
+            ->assertRedirect();
+
+        $this->assertEquals('in_progress', $ticket->fresh()->status);
+    }
+
+    public function test_unassigned_technician_cannot_change_status(): void
+    {
+        $technician = $this->makeUser('technician');
+        $otherTechnician = $this->makeUser('technician');
+        $ticket = Ticket::factory()->assignedTo($otherTechnician)->create(['status' => 'open']);
+
+        $this->actingAs($technician)
+            ->put("/tickets/{$ticket->id}", ['status' => 'closed']);
+
+        $this->assertEquals('open', $ticket->fresh()->status);
+    }
+
+    public function test_technician_cannot_reassign_ticket(): void
+    {
+        $technician = $this->makeUser('technician');
+        $otherTechnician = $this->makeUser('technician');
+        $ticket = Ticket::factory()->assignedTo($technician)->create();
+
+        $this->actingAs($technician)
+            ->put("/tickets/{$ticket->id}", ['technician_id' => $otherTechnician->id]);
+
+        $this->assertEquals($technician->id, $ticket->fresh()->technician_id);
+    }
+
+    public function test_cannot_assign_non_technician_user(): void
+    {
+        $admin = $this->makeUser('admin');
+        $regularUser = $this->makeUser('user');
+        $ticket = Ticket::factory()->create();
+
+        $this->actingAs($admin)
+            ->post("/tickets/{$ticket->id}/assign", ['technician_id' => $regularUser->id])
+            ->assertSessionHasErrors('technician_id');
+
+        $this->assertNull($ticket->fresh()->technician_id);
+    }
+
+    public function test_user_cannot_comment_on_another_users_ticket(): void
+    {
+        $user = $this->makeUser('user');
+        $ticket = Ticket::factory()->create();
+
+        $this->actingAs($user)
+            ->post("/tickets/{$ticket->id}/comments", ['comment' => 'Komentar tak berwenang'])
+            ->assertForbidden();
+
+        $this->assertDatabaseCount('ticket_comments', 0);
+    }
+
+    public function test_assigned_technician_can_comment(): void
+    {
+        $technician = $this->makeUser('technician');
+        $ticket = Ticket::factory()->assignedTo($technician)->create();
+
+        $this->actingAs($technician)
+            ->post("/tickets/{$ticket->id}/comments", ['comment' => 'Sedang diperiksa'])
+            ->assertRedirect();
+
+        $this->assertDatabaseCount('ticket_comments', 1);
+    }
+
     // --- Inactive account ---
 
     public function test_inactive_user_gets_logged_out(): void

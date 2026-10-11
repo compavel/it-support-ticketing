@@ -140,7 +140,12 @@
                         </a>
                     @endif
 
-                    @if(Auth::user()->isAdmin())
+                    @php
+                        $canChangeStatus = Auth::user()->isAdmin()
+                            || (Auth::user()->isTechnician() && $ticket->technician_id === Auth::id());
+                    @endphp
+
+                    @if($canChangeStatus)
                         {{-- Status Update --}}
                         <div class="space-y-2">
                             @if($ticket->status !== 'in_progress')
@@ -180,7 +185,9 @@
                                 </form>
                             @endif
                         </div>
+                    @endif
 
+                    @if(Auth::user()->isAdmin())
                         {{-- Assign Technician --}}
                         <div class="pt-2">
                             <form method="POST" action="{{ route('tickets.assign', $ticket) }}">
@@ -188,7 +195,7 @@
                                 <label for="technician_id" class="block text-sm font-semibold text-gray-700 mb-2">Assign Teknisi</label>
                                 <select name="technician_id" id="technician_id" class="block w-full py-2.5 px-4 border border-gray-200 rounded-xl text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-sm mb-2">
                                     <option value="">Pilih teknisi</option>
-                                    @foreach(App\Models\User::technicians()->get() as $tech)
+                                    @foreach($technicians as $tech)
                                         <option value="{{ $tech->id }}" {{ $ticket->technician_id === $tech->id ? 'selected' : '' }}>
                                             {{ $tech->name }}
                                         </option>
