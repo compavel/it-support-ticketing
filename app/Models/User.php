@@ -88,6 +88,6 @@ class User extends Authenticatable
             'admin' => 'bg-purple-100 text-purple-800',
             'technician' => 'bg-blue-100 text-blue-800',
             'user' => 'bg-green-100 text-green-800',
-][$this->role] ?? 'bg-gray-100 text-gray-800';
+        ][$this->role] ?? 'bg-gray-100 text-gray-800';
     }
 }

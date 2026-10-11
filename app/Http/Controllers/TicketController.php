@@ -19,7 +19,7 @@ class TicketController extends Controller
         // Role-based filtering
         if ($user->isTechnician()) {
             $query->where('technician_id', $user->id)
-                  ->whereIn('status', ['open', 'in_progress']);
+                ->whereIn('status', ['open', 'in_progress']);
         } elseif ($user->isUser()) {
             $query->where('user_id', $user->id);
         }
@@ -30,7 +30,7 @@ class TicketController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('title', 'like', "%{$search}%")
-                  ->orWhere('description', 'like', "%{$search}%");
+                    ->orWhere('description', 'like', "%{$search}%");
             });
         }
 
@@ -108,16 +108,16 @@ class TicketController extends Controller
             'category' => 'sometimes|required|in:hardware,software,jaringan,lainnya',
             'priority' => 'sometimes|required|in:low,medium,high,urgent',
             'status' => 'sometimes|required|in:open,in_progress,resolved,closed',
-            'technician_id' => 'nullable|' . Rule::exists('users', 'id')->where('role', 'technician'),
+            'technician_id' => 'nullable|'.Rule::exists('users', 'id')->where('role', 'technician'),
         ]);
 
         // Only admin can reassign technician
-        if (!$user->isAdmin()) {
+        if (! $user->isAdmin()) {
             unset($validated['technician_id']);
         }
 
         // Status changes are limited to admin and the assigned technician
-        if (isset($validated['status']) && !$this->canChangeStatus($user, $ticket)) {
+        if (isset($validated['status']) && ! $this->canChangeStatus($user, $ticket)) {
             unset($validated['status']);
         }
 

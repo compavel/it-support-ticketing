@@ -96,7 +96,7 @@ class Ticket extends Model
 
     public function statusLabel()
     {
-        return match($this->status) {
+        return match ($this->status) {
             'open' => 'Open',
             'in_progress' => 'In Progress',
             'resolved' => 'Resolved',
@@ -107,7 +107,7 @@ class Ticket extends Model
 
     public function priorityLabel()
     {
-        return match($this->priority) {
+        return match ($this->priority) {
             'low' => 'Low',
             'medium' => 'Medium',
             'high' => 'High',
@@ -118,7 +118,7 @@ class Ticket extends Model
 
     public function categoryLabel()
     {
-        return match($this->category) {
+        return match ($this->category) {
             'hardware' => 'Hardware',
             'software' => 'Software',
             'jaringan' => 'Jaringan',
@@ -134,7 +134,7 @@ class Ticket extends Model
             'in_progress' => 'bg-amber-50 text-amber-700 ring-1 ring-amber-600/20',
             'resolved' => 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-600/20',
             'closed' => 'bg-gray-50 text-gray-600 ring-1 ring-gray-500/20',
-][$this->status] ?? 'bg-gray-50 text-gray-600';
+        ][$this->status] ?? 'bg-gray-50 text-gray-600';
     }
 
     public function statusDotCss()
@@ -144,7 +144,7 @@ class Ticket extends Model
             'in_progress' => 'bg-amber-500',
             'resolved' => 'bg-emerald-500',
             'closed' => 'bg-gray-400',
-][$this->status] ?? 'bg-gray-400';
+        ][$this->status] ?? 'bg-gray-400';
     }
 
     public function priorityBadgeCss()
@@ -154,13 +154,16 @@ class Ticket extends Model
             'high' => 'bg-orange-100 text-orange-700',
             'medium' => 'bg-blue-100 text-blue-700',
             'low' => 'bg-gray-100 text-gray-600',
-][$this->priority] ?? 'bg-gray-100 text-gray-600';
+        ][$this->priority] ?? 'bg-gray-100 text-gray-600';
     }
 
     public function progressPercent($field)
     {
         $total = static::count();
-        if ($total === 0) return 0;
+        if ($total === 0) {
+            return 0;
+        }
+
         return round((static::where($field, $this->$field)->count() / $total) * 100);
     }
 }

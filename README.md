@@ -172,17 +172,36 @@ app/
 │   ├── Ticket.php
 │   ├── TicketComment.php
 │   └── TicketHistory.php
+├── Policies/
+│   └── TicketPolicy.php
 ```
+
+## Testing
+
+Feature test menggunakan SQLite in-memory (cepat, tidak membutuhkan database terpisah).
+
+```bash
+php artisan test
+```
+
+Cakupan test:
+
+| Test File | Fokus |
+|-----------|-------|
+| `AuthenticationTest` | Login, logout, redirect per role, akun nonaktif |
+| `AuthorizationTest` | Akses per role, visibilitas ticket, assign, ubah status, komentar |
+| `TicketManagementTest` | CRUD ticket, validasi, history, filter, komentar |
 
 ## Security
 
 - Authentication menggunakan Laravel Auth
 - Password hashing dengan bcrypt
-- Role-based access control dengan Middleware
+- Role-based access control dengan Middleware (`role`, `is_active`)
+- Authorization per-objek menggunakan Laravel Policy (view/update/delete/assign/changeStatus)
 - CSRF protection otomatis
-- Input validation pada setiap form
+- Input validation pada setiap form, termasuk validasi role saat assign teknisi
 - Mass assignment protection dengan $fillable
-- Authorization check pada setiap aksi
+- Akun nonaktif otomatis logout
 
 ## Future Improvements
 

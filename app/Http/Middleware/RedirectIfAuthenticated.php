@@ -17,7 +17,7 @@ class RedirectIfAuthenticated
             if (Auth::guard($guard)->check()) {
                 $user = Auth::user();
 
-                return match($user->role) {
+                return match ($user->role) {
                     'admin' => redirect()->route('admin.dashboard'),
                     'technician' => redirect()->route('technician.dashboard'),
                     default => redirect()->route('tickets.index'),

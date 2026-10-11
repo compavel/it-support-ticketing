@@ -29,7 +29,7 @@ class CommentController extends Controller
 
     public function destroy(TicketComment $comment)
     {
-        if ($comment->user_id !== Auth::id() && !Auth::user()->isAdmin()) {
+        if ($comment->user_id !== Auth::id() && ! Auth::user()->isAdmin()) {
             abort(403);
         }
 

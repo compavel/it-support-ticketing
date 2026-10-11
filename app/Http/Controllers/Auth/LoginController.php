@@ -29,7 +29,7 @@ class LoginController extends Controller
         if (Auth::attempt($credentials, $remember)) {
             $request->session()->regenerate();
 
-            if (!Auth::user()->is_active) {
+            if (! Auth::user()->is_active) {
                 Auth::logout();
                 $request->session()->invalidate();
                 $request->session()->regenerateToken();
@@ -58,7 +58,7 @@ class LoginController extends Controller
     {
         $user = Auth::user();
 
-        return match($user->role) {
+        return match ($user->role) {
             'admin' => redirect()->route('admin.dashboard'),
             'technician' => redirect()->route('technician.dashboard'),
             default => redirect()->route('tickets.index'),
