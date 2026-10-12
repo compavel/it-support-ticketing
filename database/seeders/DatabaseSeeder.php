@@ -12,49 +12,63 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         // Admin
-        User::create([
-            'name' => 'Admin IT',
-            'email' => 'admin@sekolah.sch.id',
-            'password' => Hash::make('password'),
-            'role' => 'admin',
-            'is_active' => true,
-        ]);
+        User::firstOrCreate(
+            ['email' => 'admin@sekolah.sch.id'],
+            [
+                'name' => 'Admin IT',
+                'password' => Hash::make('password'),
+                'role' => 'admin',
+                'is_active' => true,
+            ]
+        );
 
         // Technician
-        $technician1 = User::create([
-            'name' => 'Budi Santoso',
-            'email' => 'budi@sekolah.sch.id',
-            'password' => Hash::make('password'),
-            'role' => 'technician',
-            'is_active' => true,
-        ]);
+        $technician1 = User::firstOrCreate(
+            ['email' => 'budi@sekolah.sch.id'],
+            [
+                'name' => 'Budi Santoso',
+                'password' => Hash::make('password'),
+                'role' => 'technician',
+                'is_active' => true,
+            ]
+        );
 
-        $technician2 = User::create([
-            'name' => 'Andi Pratama',
-            'email' => 'andi@sekolah.sch.id',
-            'password' => Hash::make('password'),
-            'role' => 'technician',
-            'is_active' => true,
-        ]);
+        $technician2 = User::firstOrCreate(
+            ['email' => 'andi@sekolah.sch.id'],
+            [
+                'name' => 'Andi Pratama',
+                'password' => Hash::make('password'),
+                'role' => 'technician',
+                'is_active' => true,
+            ]
+        );
 
         // Users
-        $user1 = User::create([
-            'name' => 'Siti Rahayu',
-            'email' => 'siti@sekolah.sch.id',
-            'password' => Hash::make('password'),
-            'role' => 'user',
-            'is_active' => true,
-        ]);
+        $user1 = User::firstOrCreate(
+            ['email' => 'siti@sekolah.sch.id'],
+            [
+                'name' => 'Siti Rahayu',
+                'password' => Hash::make('password'),
+                'role' => 'user',
+                'is_active' => true,
+            ]
+        );
 
-        $user2 = User::create([
-            'name' => 'Dewi Lestari',
-            'email' => 'dewi@sekolah.sch.id',
-            'password' => Hash::make('password'),
-            'role' => 'user',
-            'is_active' => true,
-        ]);
+        $user2 = User::firstOrCreate(
+            ['email' => 'dewi@sekolah.sch.id'],
+            [
+                'name' => 'Dewi Lestari',
+                'password' => Hash::make('password'),
+                'role' => 'user',
+                'is_active' => true,
+            ]
+        );
 
-        // Sample Tickets
+        // Sample Tickets (only when empty, so re-seeding stays safe)
+        if (Ticket::count() > 0) {
+            return;
+        }
+
         $tickets = [
             [
                 'user_id' => $user1->id,
