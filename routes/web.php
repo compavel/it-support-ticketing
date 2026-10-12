@@ -18,6 +18,22 @@ Route::get('/', function () {
     return redirect()->route('login');
 });
 
+// Temporary one-time setup route (shared hosting has no SSH).
+// Only exists when SETUP_KEY is set in .env — delete that line after setup.
+if (env('SETUP_KEY')) {
+    Route::get('/setup/{key}', function (string $key) {
+        abort_unless(hash_equals((string) env('SETUP_KEY'), $key), 404);
+
+        \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
+        \Illuminate\Support\Facades\Artisan::call('db:seed', ['--force' => true]);
+
+        return response(
+            "Setup complete! Semua table & akun demo sudah jadi.\n"
+            .'SEKARANG: hapus baris SETUP_KEY dari file .env, lalu buka /login.'
+        );
+    });
+}
+
 // Auth Routes (Guest)
 Route::middleware('guest')->group(function () {
     Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
