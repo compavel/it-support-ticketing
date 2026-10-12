@@ -28,48 +28,56 @@ Cara yang sama dengan ScreenTime (sudah terbukti jalan): shared hosting free, PH
 
 ---
 
-## Langkah 3: Siapkan File di Lokal
+## Langkah 3: Upload 2 Zip (File Manager, tanpa FileZilla!)
 
-Dari folder project lokal `it-support-ticketing/` (yang sudah ada `vendor/` dan `public/build/`):
+File zip **sudah jadi** di folder `deploy/` lokal kamu:
 
-1. Pastikan assets ter-build:
-```bash
-npm run build
+```
+deploy/
+├── code.zip          (0.2 MB)  ← app, public/build, artisan, .htaccess
+└── vendor-part-1.zip (6.5 MB)  ← vendor production (tanpa dev tools)
 ```
 
-2. Yang akan di-upload ke `htdocs/` (via FileZilla ke `ftpupload.net`):
+> Limit InfinityFree: **10 MB per file** (berlaku di File Manager & FTP).
+> Karena itu semua dipecah jadi zip < 10 MB. File `.php` juga max 1 MB (semua aman).
+
+Cara upload:
+
+1. Buka **File Manager** dari dashboard InfinityFree (folder `htdocs/`)
+2. **Drag & drop** `code.zip` dan `vendor-part-1.zip` dari Explorer ke File Manager
+3. Klik kanan `code.zip` → **Extract** → OK
+4. Klik kanan `vendor-part-1.zip` → **Extract** → OK
+5. **Hapus** kedua zip setelah extract (hemat quota)
+
+Hasil setelah extract, `htdocs/` berisi:
 
 ```
 htdocs/
-├── app/
-├── bootstrap/
-├── config/
-├── database/
-├── public/          ← termasuk public/build/
-├── resources/
-├── routes/
-├── storage/
-├── vendor/          ← WAJIB, 9000+ file
+├── app/  bootstrap/  config/  database/  public/  resources/  routes/  storage/
+├── vendor/
+├── .htaccess      ← otomatis ikut dari code.zip
 ├── artisan
 ├── composer.json
 └── composer.lock
 ```
 
-**JANGAN di-upload:** `node_modules/`, `.git/`, `tests/`, `.env`, `Dockerfile`, `render.yaml`
-
-> Upload `vendor/` via **FileZilla/FTP**, bukan File Manager (lebih stabil).
-
 ---
 
-## Langkah 4: Buat .htaccess di Root htdocs
+## Langkah 4: Verify .htaccess
 
-Buat file `.htaccess` di `htdocs/` (satu level DI ATAS `public/`):
+`.htaccess` otomatis ikut dari `code.zip` (sudah di-test lokal di Apache). Pastikan ada di **root `htdocs/`** (bukan di `public/`), isinya:
 
 ```apache
 RewriteEngine On
-RewriteRule ^storage/(.*)$ /storage/app/public/$1 [END]
-RewriteRule (.*) /public/$1 [L]
+RewriteCond %{DOCUMENT_ROOT}/public%{REQUEST_URI} -f
+RewriteRule ^(.*)$ public/$1 [L]
+RewriteCond %{REQUEST_URI} !^/public/
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ public/index.php [L]
 ```
+
+> Kalau File Manager bikin file `.htaccess` hidden, aktifkan **Show Hidden Files** di setting File Manager.
 
 ---
 
@@ -161,8 +169,8 @@ Kalau SETUP_KEY masih ada, orang lain bisa menjalankan ulang setup!
 | Masalah | Solusi |
 |---------|--------|
 | 500 Internal Server Error | Cek `.env` (APP_KEY wajib ada!), `storage/` 775 |
-| Class not found | `vendor/` tidak lengkap — upload ulang via FTP |
-| CSS/JS hilang | `public/build/` belum ke-upload — `npm run build` dulu |
+| Class not found | `vendor/` belum ke-extract — extract ulang `vendor-part-1.zip` |
+| CSS/JS hilang | `public/build/` belum ada — jalankan `npm run build` lokal, zip ulang `code.zip` |
 | SQLSTATE connection error | DB Host bukan `localhost`, cek lagi di dashboard |
 | Setup jalan tapi DB kosong | `SETUP_KEY` di .env tidak match dengan URL |
 | Halaman kosong | `APP_DEBUG=true` sementara di .env buat lihat error |
