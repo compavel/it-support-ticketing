@@ -166,6 +166,19 @@ class TicketManagementTest extends TestCase
         $response->assertDontSee('Printer error');
     }
 
+    public function test_ticket_search_is_case_insensitive(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        Ticket::factory()->create(['title' => 'WiFi putus total']);
+        Ticket::factory()->create(['title' => 'Printer error']);
+
+        $response = $this->actingAs($admin)->get('/tickets?search=wifi');
+
+        $response->assertOk();
+        $response->assertSee('WiFi putus total');
+        $response->assertDontSee('Printer error');
+    }
+
     // --- Comments ---
 
     public function test_user_can_comment_on_ticket(): void
