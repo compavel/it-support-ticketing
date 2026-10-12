@@ -30,4 +30,5 @@ RUN composer install --no-dev --prefer-dist --optimize-autoloader --no-interacti
 
 EXPOSE 8080
 
-CMD php artisan serve --host 0.0.0.0 --port ${PORT:-8080}
+# Migrate + seed on boot (free tier has no pre-deploy command; seeder is idempotent)
+CMD php artisan migrate --force && php artisan db:seed --force && php artisan serve --host 0.0.0.0 --port ${PORT:-8080}
